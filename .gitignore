@@ -141,4 +141,4 @@ Desktop.ini
 /.idea/
 
 # "temporary" build files
-/target/classes/application.properties
+/target/*
