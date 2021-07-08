@@ -7,6 +7,8 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -16,6 +18,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
+import javax.net.ssl.SSLContext;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
 
 @ConfigurationProperties(prefix = "expirydate", ignoreUnknownFields = true)
 @Component
@@ -34,7 +43,16 @@ public class ExpiryClient {
     }
 
     @PostConstruct
-    private void configure() {
+    private void configure() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+
+        SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy()
+        {
+            public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException
+            {
+                return true;
+            }
+        }).build();
+
 
         CredentialsProvider provider = new BasicCredentialsProvider();
         UsernamePasswordCredentials credentials
@@ -44,6 +62,7 @@ public class ExpiryClient {
         CloseableHttpClient httpClient
                 = HttpClients.custom()
                 .setSSLHostnameVerifier(new NoopHostnameVerifier())
+                .setSslcontext(sslContext)
                 .setDefaultCredentialsProvider(provider)
                 .build();
 
@@ -69,6 +88,4 @@ public class ExpiryClient {
     public void setPassword(String password){
         this.password = password;
     }
-
-
 }
